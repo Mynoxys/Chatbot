@@ -1,3 +1,4 @@
+from flask import Flask, request, jsonify
 import base64
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
@@ -48,26 +49,15 @@ model = GenerativeModel(
 chat = model.start_chat(response_validation=False)  # Disable response validation
 
 
-# Main loop for continuous conversation
-def main():
-    print("Start chatting with the AI (type 'exit' to stop):")
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() == 'exit':
-            break
-        api_response = multiturn_generate_content(chat, user_input)
-        
-        # Extract and print the text response
-        candidates = api_response.get('candidates', [])
-        for candidate in candidates:
-            content = candidate.get('content', {})
-            parts = content.get('parts', [])
-            for part in parts:
-                text_answer = part.get('text', '')
-                if text_answer:
-                    print("AI:", text_answer)
-                    break
+app = Flask(__name__)
 
 
-if __name__ == "__main__":
-    main()
+@app.route('/api/chat', methods=['POST'])
+def chat_endpoint():
+    user_message = request.json.get('message')
+    ai_response = multiturn_generate_content(chat, user_message)  # Call your Python function
+    return jsonify({'reply': ai_response})
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
